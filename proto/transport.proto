@@ -1,0 +1,9 @@
+syntax = "proto3";
+package prometheus;
+
+import "google/protobuf/empty.proto";
+import "remote.proto";
+
+service PrometheusReader {
+    rpc Receive (prometheus.WriteRequest) returns (google.protobuf.Empty) {};
+}
