@@ -34,10 +34,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = matches.value_of("listen").expect("Specify listen address").parse()?;
     info!("Listening {}", addr);
 
-    let topics: Vec<_> = matches.values_of("topics").unwrap().collect();
-    info!("Relying incoming requests to kafka topics: {:?}", topics);
+    let topic = matches.value_of("topic").expect("Specify kafka topic");
+    info!("Relying incoming requests to kafka topic: {:?}", topic);
 
-    let kafka_producer = KafkaStorage::new(kafka_config, topics);
+    let kafka_producer = KafkaStorage::new(kafka_config, topic);
     let reader = GrpcPrometheusReader::new(kafka_producer);
 
     Server::builder()

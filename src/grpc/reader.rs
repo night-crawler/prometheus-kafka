@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+
 use log::{error, trace};
 use tonic::{Request, Response, Status};
 
 use prometheus_kafka::prometheus_reader_server::PrometheusReader;
 use prometheus_kafka::WriteRequest;
 
+use crate::kafka::storage::Message;
 use crate::KafkaStorage;
 
 pub mod prometheus_kafka {
@@ -28,7 +31,13 @@ impl PrometheusReader for GrpcPrometheusReader {
         request: Request<WriteRequest>,
     ) -> Result<Response<()>, Status> {
         let write_request: WriteRequest = request.into_inner();
-        match self.storage.store(write_request).await {
+
+        let mut labels = HashMap::new();
+        labels.insert("a", "b");
+
+        let message = Message::new("a", "b", "c", labels);
+
+        match self.storage.store(&message).await {
             Ok((partition, offset)) => {
                 trace!("Committed offset {} for partition {}", offset, partition);
             }

@@ -29,11 +29,10 @@ pub fn prepare_server_arg_matches() -> ArgMatches {
                 .takes_value(true),
         )
         .arg(
-            Arg::new("topics")
-                .long("topics")
-                .about("Topic names")
+            Arg::new("topic")
+                .long("topic")
+                .about("Topic name")
                 .takes_value(true)
-                .multiple(true)
                 .default_value("out")
                 .required(true),
         )

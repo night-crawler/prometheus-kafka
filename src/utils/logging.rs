@@ -1,11 +1,10 @@
 use std::io::Write;
 use std::thread;
 
+use chrono::prelude::*;
 use env_logger::Builder;
 use env_logger::fmt::Formatter;
 use log::{LevelFilter, Record};
-
-use chrono::prelude::*;
 
 pub fn setup_logger(log_thread: bool, rust_log: Option<&str>) {
     let output_format = move |formatter: &mut Formatter, record: &Record| {
