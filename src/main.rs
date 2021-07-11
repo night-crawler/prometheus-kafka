@@ -4,7 +4,7 @@ use tonic::transport::Server;
 
 use crate::grpc::reader::GrpcPrometheusReader;
 use crate::grpc::reader::prometheus_kafka::prometheus_reader_server::PrometheusReaderServer;
-use crate::kafka::writer::KafkaProducer;
+use crate::kafka::storage::KafkaStorage;
 use crate::utils::argparse::prepare_server_arg_matches;
 use crate::utils::logging::setup_logger;
 
@@ -13,7 +13,7 @@ pub mod grpc {
 }
 
 pub mod kafka {
-    pub mod writer;
+    pub mod storage;
 }
 
 pub mod utils {
@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let topics: Vec<_> = matches.values_of("topics").unwrap().collect();
     info!("Relying incoming requests to kafka topics: {:?}", topics);
 
-    let kafka_producer = KafkaProducer::new(kafka_config, topics);
+    let kafka_producer = KafkaStorage::new(kafka_config, topics);
     let reader = GrpcPrometheusReader::new(kafka_producer);
 
     Server::builder()

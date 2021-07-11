@@ -5,12 +5,12 @@ use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::producer::future_producer::OwnedDeliveryResult;
 use crate::grpc::reader::prometheus_kafka::WriteRequest;
 
-pub struct KafkaProducer {
+pub struct KafkaStorage {
     topics: Vec<String>,
     producer: FutureProducer,
 }
 
-impl KafkaProducer {
+impl KafkaStorage {
     pub fn new(config: ClientConfig, topics: Vec<&str>) -> Self {
         let producer = config.create().expect("Failed to create a producer");
         Self { producer, topics: topics.into_iter().map(|topic| topic.to_string()).collect() }
