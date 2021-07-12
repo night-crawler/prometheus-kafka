@@ -1,5 +1,5 @@
 ```shell
-cargo run --bin prometheus-kafka-server 
+cargo run --bin prometheus-kafka-server -- --log-conf prometheus_kafka=trace 
 ```
 
 ```shell
