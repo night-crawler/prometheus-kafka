@@ -10,6 +10,7 @@ use crate::utils::logging::setup_logger;
 
 pub mod grpc {
     pub mod reader;
+    pub mod convert;
 }
 
 pub mod kafka {

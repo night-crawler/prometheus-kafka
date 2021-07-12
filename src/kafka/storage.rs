@@ -7,8 +7,6 @@ use rdkafka::producer::future_producer::OwnedDeliveryResult;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::grpc::reader::prometheus_kafka::WriteRequest;
-
 pub struct KafkaStorage {
     topic: String,
     producer: FutureProducer,
@@ -23,7 +21,7 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(name: &str, value: &str, timestamp: &str, labels: HashMap<&str, &str>) -> Self {
+    pub fn new(name: &str, value: &str, timestamp: &str, labels: &HashMap<&str, &str>) -> Self {
         Self {
             name: name.to_string(),
             value: value.to_string(),

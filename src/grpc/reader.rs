@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-
+use hex;
 use log::{error, trace};
+use rdkafka::Message;
 use tonic::{Request, Response, Status};
 
 use prometheus_kafka::prometheus_reader_server::PrometheusReader;
 use prometheus_kafka::WriteRequest;
 
-use crate::kafka::storage::Message;
+use crate::grpc::convert::Convert;
 use crate::KafkaStorage;
 
 pub mod prometheus_kafka {
@@ -17,7 +17,6 @@ pub struct GrpcPrometheusReader {
     storage: KafkaStorage,
 }
 
-
 impl GrpcPrometheusReader {
     pub fn new(storage: KafkaStorage) -> Self {
         Self { storage }
@@ -26,25 +25,35 @@ impl GrpcPrometheusReader {
 
 #[tonic::async_trait]
 impl PrometheusReader for GrpcPrometheusReader {
-    async fn receive(
-        &self,
-        request: Request<WriteRequest>,
-    ) -> Result<Response<()>, Status> {
+    async fn receive(&self, request: Request<WriteRequest>) -> Result<Response<()>, Status> {
         let write_request: WriteRequest = request.into_inner();
+        let messages = write_request.convert();
+        let futures = messages
+            .iter()
+            .map(|message| self.storage.store(message))
+            .collect::<Vec<_>>();
 
-        let mut labels = HashMap::new();
-        labels.insert("a", "b");
+        for future in futures {
+            match future.await {
+                Ok((partition, offset)) => {
+                    trace!("Committed offset {} for partition {}", offset, partition);
+                }
+                Err((kafka_error, owned_message)) => {
+                    let message_payload_repr = match owned_message.payload() {
+                        Some(payload) => {
+                            String::from_utf8(payload.to_vec()).unwrap_or(hex::encode(payload))
+                        }
+                        None => {
+                            "no payload".to_string()
+                        }
+                    };
 
-        let message = Message::new("a", "b", "c", labels);
-
-        match self.storage.store(&message).await {
-            Ok((partition, offset)) => {
-                trace!("Committed offset {} for partition {}", offset, partition);
+                    let error_message = format!("Error occurred {}; failed message: {}", kafka_error, message_payload_repr);
+                    error!("{}", error_message);
+                    return Err(Status::internal(error_message));
+                }
             }
-            Err((kafka_error, _message)) => {
-                error!("Error occurred: {}", kafka_error);
-            }
-        };
+        }
 
         Ok(Response::new(()))
     }
