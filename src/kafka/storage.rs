@@ -13,14 +13,14 @@ pub struct KafkaStorage {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Message {
+pub struct PrometheusKafkaMessage {
     labels: HashMap<String, String>,
     name: String,
     value: String,
     timestamp: String,
 }
 
-impl Message {
+impl PrometheusKafkaMessage {
     pub fn new(name: &str, value: &str, timestamp: &str, labels: &HashMap<&str, &str>) -> Self {
         Self {
             name: name.to_string(),
@@ -37,7 +37,7 @@ impl KafkaStorage {
         Self { producer, topic: topic.to_string() }
     }
 
-    pub async fn store(&self, message: &Message) -> OwnedDeliveryResult {
+    pub async fn store(&self, message: &PrometheusKafkaMessage) -> OwnedDeliveryResult {
         let uuid = Uuid::new_v4().to_string();
         let payload = serde_json::to_string(message).expect("Could not serialize a message");
         let record = FutureRecord::to(self.topic.as_str())

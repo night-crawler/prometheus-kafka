@@ -8,17 +8,17 @@ use chrono::{DateTime, Utc};
 
 use crate::grpc::reader::prometheus_kafka::Label;
 use crate::grpc::reader::prometheus_kafka::WriteRequest;
-use crate::kafka::storage::Message;
+use crate::kafka::storage::PrometheusKafkaMessage;
 
 const DEFAULT_NAME: &str = "__UNKNOWN_NAME__";
 
 pub trait Convert {
-    fn convert(&self) -> Vec<Message>;
+    fn convert(&self) -> Vec<PrometheusKafkaMessage>;
 }
 
 impl Convert for WriteRequest {
-    fn convert(&self) -> Vec<Message> {
-        let mut messages: Vec<Message> = vec![];
+    fn convert(&self) -> Vec<PrometheusKafkaMessage> {
+        let mut messages: Vec<PrometheusKafkaMessage> = vec![];
 
         for ts in self.timeseries.iter() {
             let labels_map: HashMap<&str, &str> = labels_to_map(&ts.labels);
@@ -28,7 +28,7 @@ impl Convert for WriteRequest {
                 let value = sample.value.to_string();
                 // timestamp is in ms format, see pkg/timestamp/timestamp.go
                 let timestamp = ms_to_utc_rfc3339(sample.timestamp);
-                messages.push(Message::new(name, &value, &timestamp, &labels_map));
+                messages.push(PrometheusKafkaMessage::new(name, &value, &timestamp, &labels_map));
             }
 
             for exemplar in ts.exemplars.iter() {
@@ -36,7 +36,7 @@ impl Convert for WriteRequest {
                 let labels_map = merge(&labels_map, &additional_labels);
                 let value = exemplar.value.to_string();
                 let timestamp = ms_to_utc_rfc3339(exemplar.timestamp);
-                messages.push(Message::new(name, &value, &timestamp, &labels_map));
+                messages.push(PrometheusKafkaMessage::new(name, &value, &timestamp, &labels_map));
             }
         }
 

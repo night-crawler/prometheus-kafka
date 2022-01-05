@@ -1,11 +1,12 @@
 use log::info;
 use rdkafka::ClientConfig;
+use structopt::StructOpt;
 use tonic::transport::Server;
 
 use crate::grpc::reader::GrpcPrometheusReader;
 use crate::grpc::reader::prometheus_kafka::prometheus_reader_server::PrometheusReaderServer;
 use crate::kafka::storage::KafkaStorage;
-use crate::utils::argparse::prepare_server_arg_matches;
+use crate::utils::argparse::AppOptions;
 use crate::utils::logging::setup_logger;
 
 pub mod grpc {
@@ -22,29 +23,32 @@ pub mod utils {
     pub mod argparse;
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let matches = prepare_server_arg_matches();
-    setup_logger(true, matches.value_of("log-conf"));
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let opts = AppOptions::from_args();
+    setup_logger(true, opts.log_conf.as_ref().map(|s| s.as_str()));
 
-    let mut kafka_config = ClientConfig::new();
-    kafka_config
-        .set("bootstrap.servers", matches.value_of("brokers").expect("Specify brokers"))
-        .set("queue.buffering.max.ms", "0");
+    info!("Options: {:#?}", opts);
 
-    let addr = matches.value_of("listen").expect("Specify listen address").parse()?;
-    info!("Listening {}", addr);
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(opts.worker_threads)
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async move {
+            let mut kafka_config = ClientConfig::new();
 
-    let topic = matches.value_of("topic").expect("Specify kafka topic");
-    info!("Relying incoming requests to kafka topic: {:?}", topic);
+            kafka_config
+                .set("bootstrap.servers", opts.brokers)
+                .set("queue.buffering.max.ms", "0");
 
-    let kafka_producer = KafkaStorage::new(kafka_config, topic);
-    let reader = GrpcPrometheusReader::new(kafka_producer);
+            let kafka_producer = KafkaStorage::new(kafka_config, &opts.topic);
+            let reader = GrpcPrometheusReader::new(kafka_producer);
 
-    Server::builder()
-        .add_service(PrometheusReaderServer::new(reader))
-        .serve(addr)
-        .await?;
+            Server::builder()
+                .add_service(PrometheusReaderServer::new(reader))
+                .serve(opts.listen)
+                .await
+        })?;
 
     Ok(())
 }

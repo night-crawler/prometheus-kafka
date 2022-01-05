@@ -1,40 +1,27 @@
-use clap::{App, Arg, ArgMatches};
+use std::net::SocketAddr;
 
-pub fn prepare_server_arg_matches() -> ArgMatches {
-    App::new("prometheus-kafka")
-        .version(option_env!("CARGO_PKG_VERSION").unwrap_or(""))
-        .about("prometheus-kafka")
-        .arg(
-            Arg::new("listen")
-                .short('l')
-                .long("listen")
-                .about("Listen gRPC address and port")
-                .takes_value(true)
-                .required(true)
-                .default_value("[::1]:50051"),
-        )
-        .arg(
-            Arg::new("brokers")
-                .short('b')
-                .long("brokers")
-                .about("Broker list in kafka format")
-                .takes_value(true)
-                .required(true)
-                .default_value("localhost:9092"),
-        )
-        .arg(
-            Arg::new("log-conf")
-                .long("log-conf")
-                .about("Configure the logging format (example: 'rdkafka=trace')")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::new("topic")
-                .long("topic")
-                .about("Topic name")
-                .takes_value(true)
-                .default_value("out")
-                .required(true),
-        )
-        .get_matches()
+use structopt::StructOpt;
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "prometheus-kafka")]
+pub struct AppOptions {
+    /// Tokio runtime worker threads
+    #[structopt(short, long, default_value = "1")]
+    pub worker_threads: usize,
+
+    /// Listen gRPC address and port
+    #[structopt(short, long, default_value = "0.0.0.0:50051")]
+    pub listen: SocketAddr,
+
+    /// Broker list in kafka format
+    #[structopt(short, long, default_value = "localhost:9092")]
+    pub brokers: String,
+
+    /// Output topic name
+    #[structopt(short, long, default_value = "out")]
+    pub topic: String,
+
+    /// Configure the logging format (example: 'rdkafka=trace')
+    #[structopt(long)]
+    pub log_conf: Option<String>,
 }
