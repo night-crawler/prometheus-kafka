@@ -49,6 +49,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let reader = GrpcPrometheusReader::new(kafka_producer);
 
             Server::builder()
+                // .http2_keepalive_interval(Some(core::time::Duration::from_millis(20000)))
+                // .concurrency_limit_per_connection(1024)
+                // .max_concurrent_streams(Some(64))
                 .add_service(PrometheusReaderServer::new(reader))
                 .serve(opts.listen)
                 .await
