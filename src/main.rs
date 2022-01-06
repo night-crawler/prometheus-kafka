@@ -42,7 +42,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             kafka_config
                 .set("bootstrap.servers", opts.brokers)
-                .set("queue.buffering.max.ms", "0");
+                .set("batch.num.messages", opts.batch_size.to_string())
+                .set("linger.ms", opts.batch_linger_ms.to_string());
 
             let kafka_producer = KafkaStorage::new(kafka_config, &opts.topic);
             let reader = GrpcPrometheusReader::new(kafka_producer);

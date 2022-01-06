@@ -21,6 +21,14 @@ pub struct AppOptions {
     #[structopt(short, long, default_value = "out")]
     pub topic: String,
 
+    /// Queue buffering time
+    #[structopt(long, default_value = "2000")]
+    pub batch_linger_ms: usize,
+
+    /// Queue batch size
+    #[structopt(long, default_value = "500")]
+    pub batch_size: usize,
+
     /// Configure the logging format (example: 'rdkafka=trace')
     #[structopt(long)]
     pub log_conf: Option<String>,
