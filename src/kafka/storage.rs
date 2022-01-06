@@ -1,6 +1,8 @@
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
+use log::info;
 use rdkafka::ClientConfig;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::producer::future_producer::OwnedDeliveryResult;
@@ -10,6 +12,7 @@ use uuid::Uuid;
 pub struct KafkaStorage {
     topic: String,
     producer: FutureProducer,
+    num_written: AtomicUsize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -34,7 +37,11 @@ impl PrometheusKafkaMessage {
 impl KafkaStorage {
     pub fn new(config: ClientConfig, topic: &str) -> Self {
         let producer = config.create().expect("Failed to create a producer");
-        Self { producer, topic: topic.to_string() }
+        Self {
+            producer,
+            topic: topic.to_string(),
+            num_written: AtomicUsize::default(),
+        }
     }
 
     pub async fn store(&self, message: &PrometheusKafkaMessage) -> OwnedDeliveryResult {
@@ -45,6 +52,13 @@ impl KafkaStorage {
             .partition(-1)
             .payload(payload.as_str());
 
-        self.producer.send(record, Duration::from_secs(0)).await
+        let result = self.producer.send(record, Duration::from_secs(0)).await;
+        let num = self.num_written.fetch_add(1, Ordering::Relaxed);
+
+        if num % 10000 == 0 {
+            info!("Written {} messages", num);
+        }
+
+        result
     }
 }
