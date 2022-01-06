@@ -9,6 +9,9 @@ use crate::kafka::storage::KafkaStorage;
 use crate::utils::argparse::AppOptions;
 use crate::utils::logging::setup_logger;
 
+#[global_allocator]
+static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 pub mod grpc {
     pub mod reader;
     pub mod convert;
