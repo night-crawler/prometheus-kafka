@@ -9,7 +9,7 @@ use log::{LevelFilter, Record};
 pub fn setup_logger(log_thread: bool, rust_log: Option<&str>) {
     let output_format = move |formatter: &mut Formatter, record: &Record| {
         let thread_name = if log_thread {
-            format!("(t: {}) ", thread::current().name().unwrap_or("unknown"))
+            format!("({:^3?} {}) ", thread::current().id(), thread::current().name().unwrap_or("unknown"))
         } else {
             "".to_string()
         };
