@@ -17,7 +17,8 @@ grpcurl \
 ## Benchmark
 
 ```shell
-ghz \                                                                                                                                                            INT ✘  13:30:54 
+ghz \
+  --skipTLS \
   --insecure \
   --cpus=16 \
   --connections=100 \

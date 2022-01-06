@@ -10,7 +10,7 @@ use crate::utils::argparse::AppOptions;
 use crate::utils::logging::setup_logger;
 
 #[global_allocator]
-static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 pub mod grpc {
     pub mod reader;
@@ -49,7 +49,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let reader = GrpcPrometheusReader::new(kafka_producer);
 
             Server::builder()
-                // .http2_keepalive_interval(Some(core::time::Duration::from_millis(20000)))
+                // .accept_http1(false)
+                // .tcp_nodelay(false)
+                // .tcp_keepalive(Some(core::time::Duration::from_secs(20)))
+                // .http2_keepalive_interval(Some(core::time::Duration::from_secs(20)))
+                // .http2_keepalive_timeout(Some(core::time::Duration::from_secs(30)))
                 // .concurrency_limit_per_connection(1024)
                 // .max_concurrent_streams(Some(64))
                 .add_service(PrometheusReaderServer::new(reader))
