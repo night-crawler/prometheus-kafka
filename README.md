@@ -51,8 +51,8 @@ ghz \
   --skipTLS \
   --insecure \
   --cpus=16 \
-  --connections=100 \
-  --concurrency=2500 \
+  --connections=16 \
+  --concurrency=1000 \
   --keepalive=12s \
   --duration=10s \
   --import-paths=./proto \
