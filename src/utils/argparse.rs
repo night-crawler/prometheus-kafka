@@ -32,4 +32,8 @@ pub struct AppOptions {
     /// Configure the logging format (example: 'rdkafka=trace')
     #[structopt(long)]
     pub log_conf: Option<String>,
+
+    /// Don't send anything to a kafka topic
+    #[structopt(long)]
+    pub dry_run: bool,
 }

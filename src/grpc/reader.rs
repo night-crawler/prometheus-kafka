@@ -23,11 +23,12 @@ pub mod prometheus_kafka {
 
 pub struct GrpcPrometheusReader {
     storage: Arc<KafkaStorage>,
+    dry_run: bool,
 }
 
 impl GrpcPrometheusReader {
-    pub fn new(storage: KafkaStorage) -> Self {
-        Self { storage: Arc::from(storage) }
+    pub fn new(storage: KafkaStorage, dry_run: bool) -> Self {
+        Self { storage: Arc::from(storage), dry_run }
     }
 }
 
@@ -59,6 +60,10 @@ async fn store(storage: Arc<KafkaStorage>, message: PrometheusKafkaMessage) -> O
 #[tonic::async_trait]
 impl PrometheusReader for GrpcPrometheusReader {
     async fn receive(&self, request: Request<WriteRequest>) -> Result<Response<()>, Status> {
+        if self.dry_run {
+            return Ok(Response::new(()));
+        }
+
         let write_request: WriteRequest = request.into_inner();
         let messages = write_request.convert();
 

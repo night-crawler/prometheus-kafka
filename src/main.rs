@@ -10,7 +10,7 @@ use crate::utils::argparse::AppOptions;
 use crate::utils::logging::setup_logger;
 
 #[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
 pub mod grpc {
     pub mod reader;
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .set("linger.ms", opts.batch_linger_ms.to_string());
 
             let kafka_producer = KafkaStorage::new(kafka_config, &opts.topic);
-            let reader = GrpcPrometheusReader::new(kafka_producer);
+            let reader = GrpcPrometheusReader::new(kafka_producer, opts.dry_run);
 
             Server::builder()
                 // .accept_http1(false)
